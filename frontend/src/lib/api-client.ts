@@ -1,6 +1,6 @@
-import { ApiError, createUrl, parseResponse } from "./api-core";
+import { ApiError, createUrl, normalizeApiBaseUrl, parseResponse } from "./api-core";
 
-const publicApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+const publicApiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api");
 
 export { ApiError };
 

@@ -46,6 +46,8 @@ docker compose up --build
 - `ADMIN_LOGIN_ID`, `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD`: 初期管理者
 - `SEED_MODE`: `bootstrap` または `demo`
 
+`API_INTERNAL_BASE_URL` は `https://...` を含む完全 URL を使ってください。
+
 ## 開発用チェック
 
 ```bash

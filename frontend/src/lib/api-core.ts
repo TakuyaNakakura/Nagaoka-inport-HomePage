@@ -8,6 +8,34 @@ export class ApiError extends Error {
 }
 
 export const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value);
+const PROTOCOL_RELATIVE_URL_PATTERN = /^\/\//;
+const DOMAIN_LIKE_BASE_URL_PATTERN = /^\/?[a-z0-9.-]+\.[a-z]{2,}(?::\d+)?(?:\/.*)?$/i;
+
+export const normalizeApiBaseUrl = (baseUrl: string, allowRelative = true) => {
+  const trimmed = baseUrl.trim();
+
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  if (isAbsoluteUrl(trimmed)) {
+    return trimmed.replace(/\/$/, "");
+  }
+
+  if (PROTOCOL_RELATIVE_URL_PATTERN.test(trimmed)) {
+    return `https:${trimmed}`.replace(/\/$/, "");
+  }
+
+  if (DOMAIN_LIKE_BASE_URL_PATTERN.test(trimmed)) {
+    return `https://${trimmed.replace(/^\/+/, "")}`.replace(/\/$/, "");
+  }
+
+  if (!allowRelative) {
+    throw new Error(`Expected an absolute API base URL, received: ${trimmed}`);
+  }
+
+  return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || "/" : `/${trimmed.replace(/\/$/, "")}`;
+};
 
 const normalizeRelativeBaseUrl = (baseUrl: string) => {
   if (!baseUrl) {

@@ -45,6 +45,7 @@ Production では `SEED_MODE=bootstrap` を推奨します。Preview でも demo
 | `NEXT_PUBLIC_API_BASE_URL` | 任意 | browser から参照する API base。通常は `/api` のまま | `/api` |
 
 `NEXT_PUBLIC_API_BASE_URL` は未設定でも `/api` が既定値です。特別な理由がなければ `/api` のままにしてください。
+`API_INTERNAL_BASE_URL` は `https://api-portal.example.com` のような完全 URL を設定してください。`/api-portal.example.com` や `api-portal.example.com` のような値は避けてください。
 
 ## Preview と Production の考え方
 

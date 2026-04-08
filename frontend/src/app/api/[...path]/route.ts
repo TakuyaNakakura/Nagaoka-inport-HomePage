@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
+import { normalizeApiBaseUrl } from "@/lib/api-core";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ABSOLUTE_URL_PATTERN = /^https?:\/\//i;
 const PROXY_ERROR_MESSAGE = "API proxy is not configured correctly.";
 
 type RouteContext = {
@@ -15,11 +15,11 @@ type RouteContext = {
 const resolveProxyBaseUrl = () => {
   const configuredBaseUrl = process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  if (!configuredBaseUrl || !ABSOLUTE_URL_PATTERN.test(configuredBaseUrl)) {
+  if (!configuredBaseUrl) {
     throw new Error(PROXY_ERROR_MESSAGE);
   }
 
-  return configuredBaseUrl;
+  return normalizeApiBaseUrl(configuredBaseUrl, false);
 };
 
 const buildTargetUrl = (path: string[], search: string) => {

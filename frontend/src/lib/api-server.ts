@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cookies, headers } from "next/headers";
-import { ApiError, createUrl, isAbsoluteUrl, parseResponse } from "./api-core";
+import { ApiError, createUrl, isAbsoluteUrl, normalizeApiBaseUrl, parseResponse } from "./api-core";
 import type {
   ActivityReport,
   Center,
@@ -16,11 +16,11 @@ import type {
   User
 } from "./types";
 
-const publicApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+const publicApiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api");
 
 const resolveServerApiBaseUrl = async () => {
   if (process.env.API_INTERNAL_BASE_URL) {
-    return process.env.API_INTERNAL_BASE_URL;
+    return normalizeApiBaseUrl(process.env.API_INTERNAL_BASE_URL, false);
   }
 
   if (isAbsoluteUrl(publicApiBaseUrl)) {
