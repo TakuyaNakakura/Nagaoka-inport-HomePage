@@ -730,6 +730,43 @@ const seed = async () => {
     }
   });
 
+  await syncRecord({
+    label: "site page",
+    key: "about_terms",
+    findExisting: () =>
+      prisma.sitePage.findUnique({
+        where: { pageKey: SitePageKey.ABOUT_TERMS }
+      }),
+    create: (data) =>
+      prisma.sitePage.create({
+        data
+      }),
+    update: (data) =>
+      prisma.sitePage.update({
+        where: { pageKey: SitePageKey.ABOUT_TERMS },
+        data
+      }),
+    createData: {
+      pageKey: SitePageKey.ABOUT_TERMS,
+      title: "サイトについて・利用規約",
+      body:
+        "本サイトは技術協力会が運用する会員企業向けポータルサイトです。学校公式サイトではありません。利用者はログインのうえ、会員向け情報の閲覧、企業情報の更新、技術シーズの登録を行えます。",
+      updatedBy: admin.id
+    },
+    updateData: {
+      title: "サイトについて・利用規約",
+      body:
+        "本サイトは技術協力会が運用する会員企業向けポータルサイトです。学校公式サイトではありません。利用者はログインのうえ、会員向け情報の閲覧、企業情報の更新、技術シーズの登録を行えます。",
+      updatedBy: admin.id
+    }
+  });
+
+  console.info(`[seed] mode: ${config.seedMode}`);
+
+  if (config.seedMode !== "demo") {
+    return;
+  }
+
   const syncedCenters = [] as Center[];
   for (const center of centers) {
     const item = await syncRecord({
@@ -761,37 +798,6 @@ const seed = async () => {
 
     syncedCenters.push(item);
   }
-
-  await syncRecord({
-    label: "site page",
-    key: "about_terms",
-    findExisting: () =>
-      prisma.sitePage.findUnique({
-        where: { pageKey: SitePageKey.ABOUT_TERMS }
-      }),
-    create: (data) =>
-      prisma.sitePage.create({
-        data
-      }),
-    update: (data) =>
-      prisma.sitePage.update({
-        where: { pageKey: SitePageKey.ABOUT_TERMS },
-        data
-      }),
-    createData: {
-      pageKey: SitePageKey.ABOUT_TERMS,
-      title: "サイトについて・利用規約",
-      body:
-        "本サイトは技術協力会が運用する会員企業向けポータルサイトです。学校公式サイトではありません。利用者はログインのうえ、会員向け情報の閲覧、企業情報の更新、技術シーズの登録を行えます。",
-      updatedBy: admin.id
-    },
-    updateData: {
-      title: "サイトについて・利用規約",
-      body:
-        "本サイトは技術協力会が運用する会員企業向けポータルサイトです。学校公式サイトではありません。利用者はログインのうえ、会員向け情報の閲覧、企業情報の更新、技術シーズの登録を行えます。",
-      updatedBy: admin.id
-    }
-  });
 
   for (const company of demoCompanies) {
     await syncRecord({

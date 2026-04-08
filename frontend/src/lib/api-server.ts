@@ -1,7 +1,7 @@
 import "server-only";
 
-import { cookies } from "next/headers";
-import { ApiError, createUrl, parseResponse } from "./api-core";
+import { cookies, headers } from "next/headers";
+import { ApiError, createUrl, isAbsoluteUrl, parseResponse } from "./api-core";
 import type {
   ActivityReport,
   Center,
@@ -16,8 +16,28 @@ import type {
   User
 } from "./types";
 
-const internalApiBaseUrl =
-  process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+const publicApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+
+const resolveServerApiBaseUrl = async () => {
+  if (process.env.API_INTERNAL_BASE_URL) {
+    return process.env.API_INTERNAL_BASE_URL;
+  }
+
+  if (isAbsoluteUrl(publicApiBaseUrl)) {
+    return publicApiBaseUrl;
+  }
+
+  const headerStore = await headers();
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const protocol = headerStore.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+
+  if (!host) {
+    return `http://localhost:3000${publicApiBaseUrl}`;
+  }
+
+  const normalizedBaseUrl = publicApiBaseUrl.startsWith("/") ? publicApiBaseUrl : `/${publicApiBaseUrl}`;
+  return `${protocol}://${host}${normalizedBaseUrl}`;
+};
 
 export { ApiError };
 
@@ -28,8 +48,9 @@ export const serverApiFetch = async <T>(
 ) => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
+  const apiBaseUrl = await resolveServerApiBaseUrl();
 
-  const response = await fetch(createUrl(internalApiBaseUrl, path, query), {
+  const response = await fetch(createUrl(apiBaseUrl, path, query), {
     ...init,
     cache: "no-store",
     headers: {
