@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum SitePageKey {
+  ABOUT_TERMS
+}
+
+model User {
+  id                 String      @id @default(cuid())
+  loginId            String      @unique
+  email              String      @unique
+  passwordHash       String
+  userName           String
+  role               Role
+  companyId          String?
+  company            Company?    @relation(fields: [companyId], references: [id])
+  status             UserStatus  @default(ACTIVE)
+  mustChangePassword Boolean     @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  sessions           Session[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id              String     @id @default(cuid())
+  companyName     String
+  industry        String
+  address         String?
+  businessSummary String?
+  interestTheme   String?
+  contactInfo     String?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  users           User[]
+  techSeeds       TechSeed[]
+}
+
+model TechSeed {
+  id                 String   @id @default(cuid())
+  companyId          String
+  seedName           String
+  seedSummary        String
+  applicationField   String?
+  usageExample       String?
+  strength           String?
+  relatedResults     String?
+  collaborationTheme String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model News {
+  id            String        @id @default(cuid())
+  title         String
+  body          String
+  category      String
+  publishStatus PublishStatus @default(DRAFT)
+  publishedAt   DateTime?
+  createdBy     String
+  updatedBy     String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Center {
+  id               String                 @id @default(cuid())
+  centerName       String                 @unique
+  domain           String
+  summary          String
+  mainActivities   String
+  companyRelation  String?
+  createdBy        String
+  updatedBy        String
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  reportRelations  ActivityReportCenter[]
+  projectRelations SupportProjectCenter[]
+}
+
+model ActivityReport {
+  id              String                  @id @default(cuid())
+  title           String
+  summary         String
+  body            String
+  category        String?
+  publishStatus   PublishStatus           @default(DRAFT)
+  publishedAt     DateTime?
+  createdBy       String
+  updatedBy       String
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  centerRelations ActivityReportCenter[]
+  projectRelations ActivityReportProject[]
+}
+
+model SupportProject {
+  id              String                  @id @default(cuid())
+  projectName     String
+  summary         String
+  background      String
+  issue           String
+  goal            String
+  supportNeeded   String
+  expectedResult  String?
+  contactInfo     String?
+  publishStatus   PublishStatus           @default(DRAFT)
+  publishedAt     DateTime?
+  createdBy       String
+  updatedBy       String
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  centerRelations SupportProjectCenter[]
+  reportRelations ActivityReportProject[]
+}
+
+model ActivityReportCenter {
+  id               String         @id @default(cuid())
+  activityReportId String
+  centerId         String
+  activityReport   ActivityReport @relation(fields: [activityReportId], references: [id], onDelete: Cascade)
+  center           Center         @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@unique([activityReportId, centerId])
+}
+
+model SupportProjectCenter {
+  id               String         @id @default(cuid())
+  supportProjectId String
+  centerId         String
+  supportProject   SupportProject @relation(fields: [supportProjectId], references: [id], onDelete: Cascade)
+  center           Center         @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@unique([supportProjectId, centerId])
+}
+
+model ActivityReportProject {
+  id               String         @id @default(cuid())
+  activityReportId String
+  supportProjectId String
+  activityReport   ActivityReport @relation(fields: [activityReportId], references: [id], onDelete: Cascade)
+  supportProject   SupportProject @relation(fields: [supportProjectId], references: [id], onDelete: Cascade)
+
+  @@unique([activityReportId, supportProjectId])
+}
+
+model SitePage {
+  id        String      @id @default(cuid())
+  pageKey   SitePageKey @unique
+  title     String
+  body      String
+  updatedBy String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}

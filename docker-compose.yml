@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-member_portal}
+      POSTGRES_USER: ${POSTGRES_USER:-portal_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-portal_password}
+    ports:
+      - "${POSTGRES_HOST_PORT:-55433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-portal_user} -d ${POSTGRES_DB:-member_portal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-portal_user}:${POSTGRES_PASSWORD:-portal_password}@db:5432/${POSTGRES_DB:-member_portal}?schema=public
+      FRONTEND_ORIGIN: http://localhost:${FRONTEND_HOST_PORT:-3000}
+      SESSION_SECRET: ${SESSION_SECRET:-replace-with-a-long-random-secret}
+      ADMIN_LOGIN_ID: ${ADMIN_LOGIN_ID:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_NAME: ${ADMIN_NAME:-Portal Admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-now}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_HOST_PORT:-4000}:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_INTERNAL_BASE_URL: http://backend:4000
+      NEXT_PUBLIC_API_BASE_URL: ${FRONTEND_PUBLIC_API_BASE_URL:-http://localhost:4000}
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:3000"
+
+volumes:
+  postgres_data:
+

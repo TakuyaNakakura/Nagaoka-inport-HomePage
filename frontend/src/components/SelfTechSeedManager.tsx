@@ -1,0 +1,230 @@
+"use client";
+
+import { useState } from "react";
+import { ApiError, clientApiFetch } from "@/lib/api-client";
+import type { TechSeed } from "@/lib/types";
+
+const emptyForm = {
+  seedName: "",
+  seedSummary: "",
+  applicationField: "",
+  usageExample: "",
+  strength: "",
+  relatedResults: "",
+  collaborationTheme: ""
+};
+
+type SelfTechSeedManagerProps = {
+  initialItems: TechSeed[];
+};
+
+export const SelfTechSeedManager = ({ initialItems }: SelfTechSeedManagerProps) => {
+  const [items, setItems] = useState(initialItems);
+  const [selectedId, setSelectedId] = useState<string | null>(initialItems[0]?.id ?? null);
+  const selectedItem = items.find((item) => item.id === selectedId) ?? null;
+  const [formValues, setFormValues] = useState({
+    seedName: selectedItem?.seedName ?? "",
+    seedSummary: selectedItem?.seedSummary ?? "",
+    applicationField: selectedItem?.applicationField ?? "",
+    usageExample: selectedItem?.usageExample ?? "",
+    strength: selectedItem?.strength ?? "",
+    relatedResults: selectedItem?.relatedResults ?? "",
+    collaborationTheme: selectedItem?.collaborationTheme ?? ""
+  });
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+
+  const syncForm = (nextItem: TechSeed | null) => {
+    setSelectedId(nextItem?.id ?? null);
+    setFormValues({
+      seedName: nextItem?.seedName ?? "",
+      seedSummary: nextItem?.seedSummary ?? "",
+      applicationField: nextItem?.applicationField ?? "",
+      usageExample: nextItem?.usageExample ?? "",
+      strength: nextItem?.strength ?? "",
+      relatedResults: nextItem?.relatedResults ?? "",
+      collaborationTheme: nextItem?.collaborationTheme ?? ""
+    });
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setMessage(null);
+    setIsPending(true);
+
+    try {
+      const payload = {
+        ...formValues,
+        applicationField: formValues.applicationField || null,
+        usageExample: formValues.usageExample || null,
+        strength: formValues.strength || null,
+        relatedResults: formValues.relatedResults || null,
+        collaborationTheme: formValues.collaborationTheme || null
+      };
+
+      const response = await clientApiFetch<{ item: TechSeed }>(
+        selectedItem ? `/me/tech-seeds/${selectedItem.id}` : "/me/tech-seeds",
+        {
+          method: selectedItem ? "PATCH" : "POST",
+          body: JSON.stringify(payload)
+        }
+      );
+
+      setItems((current) => {
+        const index = current.findIndex((item) => item.id === response.item.id);
+        if (index === -1) {
+          return [response.item, ...current];
+        }
+
+        const next = [...current];
+        next[index] = response.item;
+        return next;
+      });
+      syncForm(response.item);
+      setMessage("技術シーズを保存しました。");
+    } catch (submitError) {
+      setError(submitError instanceof ApiError ? submitError.message : "保存に失敗しました。");
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedItem) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+    setIsPending(true);
+
+    try {
+      await clientApiFetch(`/me/tech-seeds/${selectedItem.id}`, { method: "DELETE" });
+      const nextItems = items.filter((item) => item.id !== selectedItem.id);
+      setItems(nextItems);
+      syncForm(nextItems[0] ?? null);
+      setMessage("技術シーズを削除しました。");
+    } catch (deleteError) {
+      setError(deleteError instanceof ApiError ? deleteError.message : "削除に失敗しました。");
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <div className="manager-layout">
+      <aside className="panel manager-list">
+        <div className="manager-list__head">
+          <div>
+            <h2>登録済み技術シーズ</h2>
+            <p>複数登録できます。編集したい項目を選択してください。</p>
+          </div>
+          <button type="button" className="secondary-button" onClick={() => syncForm(null)}>
+            新規作成
+          </button>
+        </div>
+
+        <div className="manager-items">
+          {items.length === 0 ? <p className="empty-state">まだ技術シーズがありません。</p> : null}
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`manager-item ${selectedItem?.id === item.id ? "active" : ""}`}
+              onClick={() => syncForm(item)}
+            >
+              <strong>{item.seedName}</strong>
+              <span>{item.applicationField ?? "分野未設定"}</span>
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      <form className="panel form-panel" onSubmit={handleSubmit}>
+        <div className="manager-form__head">
+          <div>
+            <h2>{selectedItem ? "技術シーズ編集" : "技術シーズ登録"}</h2>
+            <p>会員企業の強みや連携可能テーマを更新します。</p>
+          </div>
+          {selectedItem ? (
+            <button type="button" className="danger-button" onClick={handleDelete}>
+              削除
+            </button>
+          ) : null}
+        </div>
+
+        <label className="field">
+          <span>技術シーズ名</span>
+          <input
+            value={formValues.seedName}
+            onChange={(event) => setFormValues((current) => ({ ...current, seedName: event.target.value }))}
+            required
+          />
+        </label>
+        <label className="field">
+          <span>対応可能分野</span>
+          <input
+            value={formValues.applicationField}
+            onChange={(event) =>
+              setFormValues((current) => ({ ...current, applicationField: event.target.value }))
+            }
+          />
+        </label>
+        <label className="field">
+          <span>技術概要</span>
+          <textarea
+            rows={5}
+            value={formValues.seedSummary}
+            onChange={(event) => setFormValues((current) => ({ ...current, seedSummary: event.target.value }))}
+            required
+          />
+        </label>
+        <label className="field">
+          <span>活用用途</span>
+          <textarea
+            rows={4}
+            value={formValues.usageExample}
+            onChange={(event) => setFormValues((current) => ({ ...current, usageExample: event.target.value }))}
+          />
+        </label>
+        <label className="field">
+          <span>強み・特徴</span>
+          <textarea
+            rows={4}
+            value={formValues.strength}
+            onChange={(event) => setFormValues((current) => ({ ...current, strength: event.target.value }))}
+          />
+        </label>
+        <label className="field">
+          <span>関連製品・実績</span>
+          <textarea
+            rows={4}
+            value={formValues.relatedResults}
+            onChange={(event) =>
+              setFormValues((current) => ({ ...current, relatedResults: event.target.value }))
+            }
+          />
+        </label>
+        <label className="field">
+          <span>連携したいテーマ</span>
+          <textarea
+            rows={4}
+            value={formValues.collaborationTheme}
+            onChange={(event) =>
+              setFormValues((current) => ({ ...current, collaborationTheme: event.target.value }))
+            }
+          />
+        </label>
+
+        {message ? <p className="form-success">{message}</p> : null}
+        {error ? <p className="form-error">{error}</p> : null}
+
+        <button type="submit" className="primary-button" disabled={isPending}>
+          {isPending ? "保存中..." : "保存する"}
+        </button>
+      </form>
+    </div>
+  );
+};
