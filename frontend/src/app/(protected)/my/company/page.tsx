@@ -15,7 +15,10 @@ export default async function MyCompanyPage() {
       <>
         <PageHeader eyebrow="My Company" title="自社会社情報" description="所属企業が設定されていません。" />
         <section className="panel">
-          <p className="empty-state">管理者に所属企業の設定を依頼してください。</p>
+          <div className="notice-card notice-card--warning">
+            <strong>所属企業が未設定です。</strong>
+            <p>管理者に所属企業の設定を依頼してください。</p>
+          </div>
         </section>
       </>
     );
@@ -34,4 +37,3 @@ export default async function MyCompanyPage() {
     </>
   );
 }
-

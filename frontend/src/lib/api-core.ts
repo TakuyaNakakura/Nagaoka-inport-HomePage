@@ -7,12 +7,26 @@ export class ApiError extends Error {
   }
 }
 
+export const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value);
+
+const normalizeRelativeBaseUrl = (baseUrl: string) => {
+  if (!baseUrl) {
+    return "";
+  }
+
+  const withLeadingSlash = baseUrl.startsWith("/") ? baseUrl : `/${baseUrl}`;
+  return withLeadingSlash.endsWith("/") ? withLeadingSlash.slice(0, -1) : withLeadingSlash;
+};
+
 export const createUrl = (
   baseUrl: string,
   path: string,
   query?: Record<string, string | number | undefined>
 ) => {
-  const url = new URL(path, baseUrl);
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const url = isAbsoluteUrl(baseUrl)
+    ? new URL(normalizedPath, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`)
+    : new URL(`${normalizeRelativeBaseUrl(baseUrl)}${normalizedPath}`, "http://localhost");
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -22,7 +36,7 @@ export const createUrl = (
     }
   }
 
-  return url.toString();
+  return isAbsoluteUrl(baseUrl) ? url.toString() : `${url.pathname}${url.search}`;
 };
 
 export const parseResponse = async <T>(response: Response) => {

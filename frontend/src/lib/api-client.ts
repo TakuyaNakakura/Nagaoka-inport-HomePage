@@ -1,6 +1,6 @@
 import { ApiError, createUrl, parseResponse } from "./api-core";
 
-const publicApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+const publicApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 export { ApiError };
 
@@ -20,4 +20,3 @@ export const clientApiFetch = async <T>(
 
   return parseResponse<T>(response);
 };
-

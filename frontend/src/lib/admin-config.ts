@@ -22,6 +22,11 @@ export type AdminResourceConfig = {
   allowDelete: boolean;
   deleteLabel?: string;
   fields: FormField[];
+  formSections?: Array<{
+    title: string;
+    description?: string;
+    fields: string[];
+  }>;
   secondaryAction?: {
     label: string;
     pathSuffix: string;
@@ -44,6 +49,18 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
     listSummaryField: "category",
     allowCreate: true,
     allowDelete: true,
+    formSections: [
+      {
+        title: "基本設定",
+        description: "一覧で見分けやすいタイトルとカテゴリ、公開状態を先に整えます。",
+        fields: ["title", "category", "publishStatus"]
+      },
+      {
+        title: "掲載内容",
+        description: "会員向けに表示する本文を入力します。",
+        fields: ["body"]
+      }
+    ],
     fields: [
       { name: "title", label: "タイトル", type: "text", required: true },
       { name: "category", label: "カテゴリ", type: "text", required: true },
@@ -61,6 +78,18 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
     listSummaryField: "domain",
     allowCreate: false,
     allowDelete: false,
+    formSections: [
+      {
+        title: "基本情報",
+        description: "センターの担当領域と紹介の要点を整理します。",
+        fields: ["domain", "summary"]
+      },
+      {
+        title: "活動内容",
+        description: "企業との関わり方まで含めて、紹介文を更新します。",
+        fields: ["mainActivities", "companyRelation"]
+      }
+    ],
     fields: [
       { name: "domain", label: "担当領域", type: "text", required: true },
       { name: "summary", label: "概要", type: "textarea", required: true, rows: 5 },
@@ -78,6 +107,23 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
     listSummaryField: "summary",
     allowCreate: true,
     allowDelete: true,
+    formSections: [
+      {
+        title: "基本設定",
+        description: "タイトル、カテゴリ、公開状態を先に決めて一覧で判別しやすくします。",
+        fields: ["title", "category", "publishStatus"]
+      },
+      {
+        title: "掲載内容",
+        description: "一覧の概要と詳細本文を分けて入力します。",
+        fields: ["summary", "body"]
+      },
+      {
+        title: "関連情報",
+        description: "紐づくセンターや支援プロジェクトを整理します。",
+        fields: ["centerIds", "projectIds"]
+      }
+    ],
     fields: [
       { name: "title", label: "タイトル", type: "text", required: true },
       { name: "summary", label: "概要", type: "textarea", required: true, rows: 4 },
@@ -103,6 +149,30 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
     listSummaryField: "summary",
     allowCreate: true,
     allowDelete: true,
+    formSections: [
+      {
+        title: "基本設定",
+        description: "プロジェクト名、公開状態、問い合わせ先など運用に必要な情報です。",
+        fields: ["projectName", "publishStatus", "contactInfo"]
+      },
+      {
+        title: "プロジェクト内容",
+        description: "背景から期待成果までを順に整理して記載します。",
+        fields: [
+          "summary",
+          "background",
+          "issue",
+          "goal",
+          "supportNeeded",
+          "expectedResult"
+        ]
+      },
+      {
+        title: "関連情報",
+        description: "関連センターと活動報告をつないで参照しやすくします。",
+        fields: ["centerIds", "reportIds"]
+      }
+    ],
     fields: [
       { name: "projectName", label: "プロジェクト名", type: "text", required: true },
       { name: "summary", label: "概要", type: "textarea", required: true, rows: 4 },
@@ -133,6 +203,23 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
     allowCreate: true,
     allowDelete: true,
     deleteLabel: "運用停止",
+    formSections: [
+      {
+        title: "基本情報",
+        description: "企業名や業種など、一覧比較の軸になる情報です。",
+        fields: ["companyName", "industry", "address", "contactInfo"]
+      },
+      {
+        title: "公開プロフィール",
+        description: "会員向け一覧や詳細に出る説明を更新します。",
+        fields: ["interestTheme", "businessSummary"]
+      },
+      {
+        title: "運用設定",
+        description: "運用状態をここで切り替えます。",
+        fields: ["isActive"]
+      }
+    ],
     fields: [
       { name: "companyName", label: "企業名", type: "text", required: true },
       { name: "industry", label: "業種", type: "text", required: true },
@@ -153,6 +240,23 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
     listSummaryField: "applicationField",
     allowCreate: true,
     allowDelete: true,
+    formSections: [
+      {
+        title: "基本情報",
+        description: "所属企業と技術シーズ名、対応分野を先に整理します。",
+        fields: ["companyId", "seedName", "applicationField"]
+      },
+      {
+        title: "技術内容",
+        description: "一覧や詳細で比較される技術説明をまとめます。",
+        fields: ["seedSummary", "usageExample", "strength", "relatedResults"]
+      },
+      {
+        title: "連携情報",
+        description: "企業連携につながるテーマを明確にします。",
+        fields: ["collaborationTheme"]
+      }
+    ],
     fields: [
       { name: "companyId", label: "企業", type: "select", required: true, optionsKey: "companies" },
       { name: "seedName", label: "技術シーズ名", type: "text", required: true },
@@ -179,6 +283,18 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
       label: "仮パスワード再発行",
       pathSuffix: "/reset-password"
     },
+    formSections: [
+      {
+        title: "アカウント情報",
+        description: "ログイン識別子と連絡先、表示名を設定します。",
+        fields: ["loginId", "email", "userName"]
+      },
+      {
+        title: "権限と所属",
+        description: "権限、利用状態、所属企業をまとめて管理します。",
+        fields: ["role", "status", "companyId"]
+      }
+    ],
     fields: [
       { name: "loginId", label: "ログインID", type: "text", required: true },
       { name: "email", label: "メールアドレス", type: "text", required: true },
@@ -222,6 +338,18 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
     listTitleField: "title",
     allowCreate: false,
     allowDelete: false,
+    formSections: [
+      {
+        title: "基本情報",
+        description: "ページのタイトルを設定します。",
+        fields: ["title"]
+      },
+      {
+        title: "本文",
+        description: "会員向けサイトに表示する内容を更新します。",
+        fields: ["body"]
+      }
+    ],
     fields: [
       { name: "title", label: "タイトル", type: "text", required: true },
       { name: "body", label: "本文", type: "textarea", required: true, rows: 14 }
@@ -230,4 +358,3 @@ export const adminResourceConfig: Record<AdminResourceKey, AdminResourceConfig> 
 };
 
 export const adminResourceEntries = Object.values(adminResourceConfig);
-

@@ -20,11 +20,13 @@ export default async function CompaniesPage() {
           href: `/companies/${item.id}`,
           title: item.companyName,
           summary: item.businessSummary,
-          meta: [item.industry, `更新日: ${formatDateTime(item.updatedAt)}`]
+          meta: [
+            { label: "業種", value: item.industry },
+            { label: "更新日", value: formatDateTime(item.updatedAt) }
+          ]
         }))}
         emptyMessage="会員企業情報はありません。"
       />
     </>
   );
 }
-
