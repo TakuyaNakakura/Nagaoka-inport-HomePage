@@ -14,6 +14,23 @@ const emptyForm = {
   collaborationTheme: ""
 };
 
+const buildFormValues = (item: TechSeed | null) => ({
+  seedName: item?.seedName ?? "",
+  seedSummary: item?.seedSummary ?? "",
+  applicationField: item?.applicationField ?? "",
+  usageExample: item?.usageExample ?? "",
+  strength: item?.strength ?? "",
+  relatedResults: item?.relatedResults ?? "",
+  collaborationTheme: item?.collaborationTheme ?? ""
+});
+
+const renderFieldLabel = (label: string, required?: boolean) => (
+  <span className="field-label">
+    <span>{label}</span>
+    {required ? <span className="field-required">必須</span> : null}
+  </span>
+);
+
 type SelfTechSeedManagerProps = {
   initialItems: TechSeed[];
 };
@@ -22,30 +39,16 @@ export const SelfTechSeedManager = ({ initialItems }: SelfTechSeedManagerProps) 
   const [items, setItems] = useState(initialItems);
   const [selectedId, setSelectedId] = useState<string | null>(initialItems[0]?.id ?? null);
   const selectedItem = items.find((item) => item.id === selectedId) ?? null;
-  const [formValues, setFormValues] = useState({
-    seedName: selectedItem?.seedName ?? "",
-    seedSummary: selectedItem?.seedSummary ?? "",
-    applicationField: selectedItem?.applicationField ?? "",
-    usageExample: selectedItem?.usageExample ?? "",
-    strength: selectedItem?.strength ?? "",
-    relatedResults: selectedItem?.relatedResults ?? "",
-    collaborationTheme: selectedItem?.collaborationTheme ?? ""
-  });
+  const [formValues, setFormValues] = useState(buildFormValues(selectedItem));
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
   const syncForm = (nextItem: TechSeed | null) => {
     setSelectedId(nextItem?.id ?? null);
-    setFormValues({
-      seedName: nextItem?.seedName ?? "",
-      seedSummary: nextItem?.seedSummary ?? "",
-      applicationField: nextItem?.applicationField ?? "",
-      usageExample: nextItem?.usageExample ?? "",
-      strength: nextItem?.strength ?? "",
-      relatedResults: nextItem?.relatedResults ?? "",
-      collaborationTheme: nextItem?.collaborationTheme ?? ""
-    });
+    setFormValues(nextItem ? buildFormValues(nextItem) : emptyForm);
+    setMessage(null);
+    setError(null);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -127,18 +130,31 @@ export const SelfTechSeedManager = ({ initialItems }: SelfTechSeedManagerProps) 
         </div>
 
         <div className="manager-items">
-          {items.length === 0 ? <p className="empty-state">まだ技術シーズがありません。</p> : null}
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`manager-item ${selectedItem?.id === item.id ? "active" : ""}`}
-              onClick={() => syncForm(item)}
-            >
-              <strong>{item.seedName}</strong>
-              <span>{item.applicationField ?? "分野未設定"}</span>
-            </button>
-          ))}
+          {items.length === 0 ? (
+            <div className="empty-state">
+              <strong>まだ技術シーズがありません。</strong>
+              <span>「新規作成」から登録するとここに一覧表示されます。</span>
+            </div>
+          ) : null}
+          {items.map((item) => {
+            const isActive = selectedItem?.id === item.id;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`manager-item ${isActive ? "active" : ""}`}
+                aria-pressed={isActive}
+                onClick={() => syncForm(item)}
+              >
+                <div className="manager-item__top">
+                  <strong className="manager-item__title">{item.seedName}</strong>
+                  {isActive ? <span className="manager-item__badge">編集中</span> : null}
+                </div>
+                <span className="manager-item__summary">{item.applicationField ?? "分野未設定"}</span>
+              </button>
+            );
+          })}
         </div>
       </aside>
 
@@ -146,7 +162,7 @@ export const SelfTechSeedManager = ({ initialItems }: SelfTechSeedManagerProps) 
         <div className="manager-form__head">
           <div>
             <h2>{selectedItem ? "技術シーズ編集" : "技術シーズ登録"}</h2>
-            <p>会員企業の強みや連携可能テーマを更新します。</p>
+            <p>会員企業の強みや連携可能テーマを、読み比べしやすい形で整理します。</p>
           </div>
           {selectedItem ? (
             <button type="button" className="danger-button" onClick={handleDelete}>
@@ -155,75 +171,115 @@ export const SelfTechSeedManager = ({ initialItems }: SelfTechSeedManagerProps) 
           ) : null}
         </div>
 
-        <label className="field">
-          <span>技術シーズ名</span>
-          <input
-            value={formValues.seedName}
-            onChange={(event) => setFormValues((current) => ({ ...current, seedName: event.target.value }))}
-            required
-          />
-        </label>
-        <label className="field">
-          <span>対応可能分野</span>
-          <input
-            value={formValues.applicationField}
-            onChange={(event) =>
-              setFormValues((current) => ({ ...current, applicationField: event.target.value }))
-            }
-          />
-        </label>
-        <label className="field">
-          <span>技術概要</span>
-          <textarea
-            rows={5}
-            value={formValues.seedSummary}
-            onChange={(event) => setFormValues((current) => ({ ...current, seedSummary: event.target.value }))}
-            required
-          />
-        </label>
-        <label className="field">
-          <span>活用用途</span>
-          <textarea
-            rows={4}
-            value={formValues.usageExample}
-            onChange={(event) => setFormValues((current) => ({ ...current, usageExample: event.target.value }))}
-          />
-        </label>
-        <label className="field">
-          <span>強み・特徴</span>
-          <textarea
-            rows={4}
-            value={formValues.strength}
-            onChange={(event) => setFormValues((current) => ({ ...current, strength: event.target.value }))}
-          />
-        </label>
-        <label className="field">
-          <span>関連製品・実績</span>
-          <textarea
-            rows={4}
-            value={formValues.relatedResults}
-            onChange={(event) =>
-              setFormValues((current) => ({ ...current, relatedResults: event.target.value }))
-            }
-          />
-        </label>
-        <label className="field">
-          <span>連携したいテーマ</span>
-          <textarea
-            rows={4}
-            value={formValues.collaborationTheme}
-            onChange={(event) =>
-              setFormValues((current) => ({ ...current, collaborationTheme: event.target.value }))
-            }
-          />
-        </label>
+        <section className="form-section">
+          <div className="form-section__head">
+            <h3>基本情報</h3>
+            <p>一覧で見分けやすい技術名と対応分野です。</p>
+          </div>
+          <div className="form-section__body field-grid field-grid--compact">
+            <label className="field">
+              {renderFieldLabel("技術シーズ名", true)}
+              <input
+                value={formValues.seedName}
+                onChange={(event) => setFormValues((current) => ({ ...current, seedName: event.target.value }))}
+                required
+              />
+            </label>
+            <label className="field">
+              {renderFieldLabel("対応可能分野")}
+              <input
+                value={formValues.applicationField}
+                onChange={(event) =>
+                  setFormValues((current) => ({ ...current, applicationField: event.target.value }))
+                }
+              />
+              <small className="field-help">例: IoT、機械加工、材料評価 など</small>
+            </label>
+          </div>
+        </section>
 
-        {message ? <p className="form-success">{message}</p> : null}
-        {error ? <p className="form-error">{error}</p> : null}
+        <section className="form-section">
+          <div className="form-section__head">
+            <h3>技術内容</h3>
+            <p>何ができるか、どこに強みがあるかを項目ごとに整理します。</p>
+          </div>
+          <div className="form-section__body">
+            <label className="field">
+              {renderFieldLabel("技術概要", true)}
+              <textarea
+                rows={5}
+                value={formValues.seedSummary}
+                onChange={(event) => setFormValues((current) => ({ ...current, seedSummary: event.target.value }))}
+                required
+              />
+              <small className="field-help">まず全体像が伝わる要約を記載します。</small>
+            </label>
+            <label className="field">
+              {renderFieldLabel("活用用途")}
+              <textarea
+                rows={4}
+                value={formValues.usageExample}
+                onChange={(event) =>
+                  setFormValues((current) => ({ ...current, usageExample: event.target.value }))
+                }
+              />
+            </label>
+            <label className="field">
+              {renderFieldLabel("強み・特徴")}
+              <textarea
+                rows={4}
+                value={formValues.strength}
+                onChange={(event) => setFormValues((current) => ({ ...current, strength: event.target.value }))}
+              />
+            </label>
+            <label className="field">
+              {renderFieldLabel("関連製品・実績")}
+              <textarea
+                rows={4}
+                value={formValues.relatedResults}
+                onChange={(event) =>
+                  setFormValues((current) => ({ ...current, relatedResults: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+        </section>
 
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "保存中..." : "保存する"}
-        </button>
+        <section className="form-section">
+          <div className="form-section__head">
+            <h3>連携情報</h3>
+            <p>高専や他企業と連携したいテーマを、検討しやすい形で示します。</p>
+          </div>
+          <div className="form-section__body">
+            <label className="field">
+              {renderFieldLabel("連携したいテーマ")}
+              <textarea
+                rows={4}
+                value={formValues.collaborationTheme}
+                onChange={(event) =>
+                  setFormValues((current) => ({ ...current, collaborationTheme: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+        </section>
+
+        {message ? (
+          <p className="form-success" aria-live="polite">
+            {message}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="form-error" aria-live="polite">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="form-actions">
+          <button type="submit" className="primary-button" disabled={isPending}>
+            {isPending ? "保存中..." : "保存する"}
+          </button>
+        </div>
       </form>
     </div>
   );

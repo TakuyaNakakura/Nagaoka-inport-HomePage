@@ -24,7 +24,7 @@ export default async function TechSeedsPage({ searchParams }: TechSeedsPageProps
         description="キーワード検索と分野絞り込みで、会員企業の技術シーズを探せます。"
       />
 
-      <form className="panel split-grid" method="get">
+      <form className="panel filter-form" method="get">
         <label className="field">
           <span>キーワード</span>
           <input name="q" defaultValue={q} placeholder="技術名、概要、企業名など" />
@@ -47,9 +47,9 @@ export default async function TechSeedsPage({ searchParams }: TechSeedsPageProps
           title: item.seedName,
           summary: item.seedSummary,
           meta: [
-            item.company?.companyName ?? "企業未設定",
-            item.applicationField ?? "分野未設定",
-            `更新日: ${formatDateTime(item.updatedAt)}`
+            { label: "企業", value: item.company?.companyName ?? "企業未設定" },
+            { label: "分野", value: item.applicationField ?? "分野未設定" },
+            { label: "更新日", value: formatDateTime(item.updatedAt) }
           ]
         }))}
         emptyMessage="条件に一致する技術シーズはありません。"

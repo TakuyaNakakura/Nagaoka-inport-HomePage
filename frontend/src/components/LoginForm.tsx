@@ -46,7 +46,12 @@ export const LoginForm = () => {
 
       <label className="field">
         <span>ログインID / メールアドレス</span>
-        <input value={loginOrEmail} onChange={(event) => setLoginOrEmail(event.target.value)} required />
+        <input
+          value={loginOrEmail}
+          autoComplete="username"
+          onChange={(event) => setLoginOrEmail(event.target.value)}
+          required
+        />
       </label>
 
       <label className="field">
@@ -54,6 +59,7 @@ export const LoginForm = () => {
         <input
           type="password"
           value={password}
+          autoComplete="current-password"
           onChange={(event) => setPassword(event.target.value)}
           required
         />
@@ -61,9 +67,11 @@ export const LoginForm = () => {
 
       {error ? <p className="form-error">{error}</p> : null}
 
-      <button type="submit" className="primary-button" disabled={isPending}>
-        {isPending ? "認証中..." : "ログイン"}
-      </button>
+      <div className="button-row">
+        <button type="submit" className="primary-button" disabled={isPending}>
+          {isPending ? "認証中..." : "ログイン"}
+        </button>
+      </div>
 
       <p className="muted-text">
         パスワード再設定は管理者による仮パスワード再発行で運用します。

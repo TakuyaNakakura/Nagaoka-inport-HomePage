@@ -20,50 +20,63 @@ const emptyValueForField = (field: FormField) => {
 
 const buildInitialValues = (fields: FormField[], item?: Record<string, unknown> | null): FormValues => {
   return fields.reduce<FormValues>((accumulator, field) => {
-      const value = item?.[field.name];
+    const value = item?.[field.name];
 
-      if (field.type === "checkbox") {
-        accumulator[field.name] = Boolean(value);
-        return accumulator;
-      }
-
-      if (field.type === "multiselect") {
-        accumulator[field.name] = Array.isArray(value) ? (value as string[]) : [];
-        return accumulator;
-      }
-
-      accumulator[field.name] = typeof value === "string" ? value : value == null ? "" : String(value);
+    if (field.type === "checkbox") {
+      accumulator[field.name] = Boolean(value);
       return accumulator;
-    }, {});
+    }
+
+    if (field.type === "multiselect") {
+      accumulator[field.name] = Array.isArray(value) ? (value as string[]) : [];
+      return accumulator;
+    }
+
+    accumulator[field.name] = typeof value === "string" ? value : value == null ? "" : String(value);
+    return accumulator;
+  }, {});
 };
 
 const buildPayload = (fields: FormField[], values: FormValues) =>
   fields.reduce<Record<string, unknown>>((accumulator, field) => {
-      const value = values[field.name];
+    const value = values[field.name];
 
-      if (field.type === "checkbox") {
-        accumulator[field.name] = Boolean(value);
-        return accumulator;
-      }
-
-      if (field.type === "multiselect") {
-        accumulator[field.name] = Array.isArray(value) ? value : [];
-        return accumulator;
-      }
-
-      if (field.nullable && value === "") {
-        accumulator[field.name] = null;
-        return accumulator;
-      }
-
-      accumulator[field.name] = value;
+    if (field.type === "checkbox") {
+      accumulator[field.name] = Boolean(value);
       return accumulator;
-    }, {});
+    }
+
+    if (field.type === "multiselect") {
+      accumulator[field.name] = Array.isArray(value) ? value : [];
+      return accumulator;
+    }
+
+    if (field.nullable && value === "") {
+      accumulator[field.name] = null;
+      return accumulator;
+    }
+
+    accumulator[field.name] = value;
+    return accumulator;
+  }, {});
+
+const renderFieldLabel = (label: string, required?: boolean) => (
+  <span className="field-label">
+    <span>{label}</span>
+    {required ? <span className="field-required">必須</span> : null}
+  </span>
+);
 
 type RecordManagerProps = {
   resource: AdminResourceKey;
   initialItems: Record<string, unknown>[];
   referenceData: ReferenceData;
+};
+
+type RecordManagerFormSection = {
+  title?: string;
+  description?: string;
+  fields: FormField[];
 };
 
 export const RecordManager = ({ resource, initialItems, referenceData }: RecordManagerProps) => {
@@ -226,6 +239,139 @@ export const RecordManager = ({ resource, initialItems, referenceData }: RecordM
     return [];
   };
 
+  const formSections = (() => {
+    if (!config.formSections?.length) {
+      return [{ fields: config.fields }] satisfies RecordManagerFormSection[];
+    }
+
+    const fieldMap = new Map(config.fields.map((field) => [field.name, field]));
+    const usedNames = new Set<string>();
+    const configuredSections: RecordManagerFormSection[] = config.formSections
+      .map((section) => {
+        const fields = section.fields
+          .map((fieldName) => fieldMap.get(fieldName))
+          .filter((field): field is FormField => Boolean(field));
+
+        fields.forEach((field) => usedNames.add(field.name));
+
+        return {
+          title: section.title,
+          description: section.description,
+          fields
+        };
+      })
+      .filter((section) => section.fields.length > 0);
+
+    const remainingFields = config.fields.filter((field) => !usedNames.has(field.name));
+
+    if (remainingFields.length > 0) {
+      configuredSections.push({ fields: remainingFields });
+    }
+
+    return configuredSections;
+  })();
+
+  const renderField = (field: FormField) => {
+    const value = formValues[field.name] ?? emptyValueForField(field);
+    const options = selectedOptions(field);
+
+    if (field.type === "textarea") {
+      return (
+        <label key={field.name} className="field">
+          {renderFieldLabel(field.label, field.required)}
+          <textarea
+            rows={field.rows ?? 5}
+            value={String(value)}
+            placeholder={field.placeholder}
+            onChange={(event) => handleFieldChange(field, event.target.value)}
+            required={field.required}
+          />
+          {field.helpText ? <small className="field-help">{field.helpText}</small> : null}
+        </label>
+      );
+    }
+
+    if (field.type === "select") {
+      return (
+        <label key={field.name} className="field">
+          {renderFieldLabel(field.label, field.required)}
+          <select
+            value={String(value)}
+            onChange={(event) => handleFieldChange(field, event.target.value)}
+            required={field.required}
+          >
+            <option value="">未選択</option>
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {field.helpText ? <small className="field-help">{field.helpText}</small> : null}
+        </label>
+      );
+    }
+
+    if (field.type === "checkbox") {
+      return (
+        <label key={field.name} className="checkbox-field field field--checkbox">
+          <input
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(event) => handleFieldChange(field, event.target.checked)}
+          />
+          <span className="checkbox-field__body">
+            {renderFieldLabel(field.label, field.required)}
+            {field.helpText ? <small className="field-help">{field.helpText}</small> : null}
+          </span>
+        </label>
+      );
+    }
+
+    if (field.type === "multiselect") {
+      const selectedValues = Array.isArray(value) ? value : [];
+
+      return (
+        <fieldset key={field.name} className="fieldset">
+          <legend>{renderFieldLabel(field.label, field.required)}</legend>
+          {field.helpText ? <p className="field-help">{field.helpText}</p> : null}
+          <div className="checkbox-grid">
+            {options.map((option) => (
+              <label key={option.value} className="checkbox-chip">
+                <input
+                  type="checkbox"
+                  checked={selectedValues.includes(option.value)}
+                  onChange={(event) =>
+                    handleFieldChange(
+                      field,
+                      event.target.checked
+                        ? [...selectedValues, option.value]
+                        : selectedValues.filter((selectedValue) => selectedValue !== option.value)
+                    )
+                  }
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      );
+    }
+
+    return (
+      <label key={field.name} className="field">
+        {renderFieldLabel(field.label, field.required)}
+        <input
+          value={String(value)}
+          placeholder={field.placeholder}
+          onChange={(event) => handleFieldChange(field, event.target.value)}
+          required={field.required}
+        />
+        {field.helpText ? <small className="field-help">{field.helpText}</small> : null}
+      </label>
+    );
+  };
+
   return (
     <div className="manager-layout">
       <aside className="panel manager-list">
@@ -242,20 +388,36 @@ export const RecordManager = ({ resource, initialItems, referenceData }: RecordM
         </div>
 
         <div className="manager-items">
-          {items.length === 0 ? <p className="empty-state">登録データがありません。</p> : null}
-          {items.map((item) => (
-            <button
-              key={String(item.id)}
-              type="button"
-              className={`manager-item ${String(item.id) === String(selectedItem?.id) ? "active" : ""}`}
-              onClick={() => handleSelect(item)}
-            >
-              <strong>{String(item[config.listTitleField] ?? "名称未設定")}</strong>
-              {config.listSummaryField ? (
-                <span>{String(item[config.listSummaryField] ?? "")}</span>
-              ) : null}
-            </button>
-          ))}
+          {items.length === 0 ? (
+            <div className="empty-state">
+              <strong>登録データがありません。</strong>
+              <span>
+                {config.allowCreate
+                  ? "「新規作成」から追加できます。"
+                  : "編集可能なデータが登録されるとここに表示されます。"}
+              </span>
+            </div>
+          ) : null}
+          {items.map((item) => {
+            const isActive = String(item.id) === String(selectedItem?.id);
+            const summary = config.listSummaryField ? String(item[config.listSummaryField] ?? "").trim() : "";
+
+            return (
+              <button
+                key={String(item.id)}
+                type="button"
+                className={`manager-item ${isActive ? "active" : ""}`}
+                aria-pressed={isActive}
+                onClick={() => handleSelect(item)}
+              >
+                <div className="manager-item__top">
+                  <strong className="manager-item__title">{String(item[config.listTitleField] ?? "名称未設定")}</strong>
+                  {isActive ? <span className="manager-item__badge">編集中</span> : null}
+                </div>
+                {summary ? <span className="manager-item__summary">{summary}</span> : null}
+              </button>
+            );
+          })}
         </div>
       </aside>
 
@@ -279,107 +441,41 @@ export const RecordManager = ({ resource, initialItems, referenceData }: RecordM
           </div>
         </div>
 
-        {config.fields.map((field) => {
-          const value = formValues[field.name] ?? emptyValueForField(field);
-          const options = selectedOptions(field);
-
-          if (field.type === "textarea") {
-            return (
-              <label key={field.name} className="field">
-                <span>{field.label}</span>
-                <textarea
-                  rows={field.rows ?? 5}
-                  value={String(value)}
-                  placeholder={field.placeholder}
-                  onChange={(event) => handleFieldChange(field, event.target.value)}
-                  required={field.required}
-                />
-                {field.helpText ? <small>{field.helpText}</small> : null}
-              </label>
-            );
-          }
-
-          if (field.type === "select") {
-            return (
-              <label key={field.name} className="field">
-                <span>{field.label}</span>
-                <select
-                  value={String(value)}
-                  onChange={(event) => handleFieldChange(field, event.target.value)}
-                  required={field.required}
-                >
-                  <option value="">未選択</option>
-                  {options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {field.helpText ? <small>{field.helpText}</small> : null}
-              </label>
-            );
-          }
-
-          if (field.type === "checkbox") {
-            return (
-              <label key={field.name} className="checkbox-field">
-                <input
-                  type="checkbox"
-                  checked={Boolean(value)}
-                  onChange={(event) => handleFieldChange(field, event.target.checked)}
-                />
-                <span>{field.label}</span>
-              </label>
-            );
-          }
-
-          if (field.type === "multiselect") {
-            const selectedValues = Array.isArray(value) ? value : [];
-
-            return (
-              <fieldset key={field.name} className="fieldset">
-                <legend>{field.label}</legend>
-                <div className="checkbox-grid">
-                  {options.map((option) => (
-                    <label key={option.value} className="checkbox-chip">
-                      <input
-                        type="checkbox"
-                        checked={selectedValues.includes(option.value)}
-                        onChange={(event) =>
-                          handleFieldChange(
-                            field,
-                            event.target.checked
-                              ? [...selectedValues, option.value]
-                              : selectedValues.filter((selectedValue) => selectedValue !== option.value)
-                          )
-                        }
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            );
-          }
+        {formSections.map((section) => {
+          const isCompactSection = section.fields.every((field) =>
+            ["text", "select", "checkbox"].includes(field.type)
+          );
 
           return (
-            <label key={field.name} className="field">
-              <span>{field.label}</span>
-              <input
-                value={String(value)}
-                placeholder={field.placeholder}
-                onChange={(event) => handleFieldChange(field, event.target.value)}
-                required={field.required}
-              />
-              {field.helpText ? <small>{field.helpText}</small> : null}
-            </label>
+            <section
+              key={section.title ?? section.fields.map((field) => field.name).join("-")}
+              className="form-section"
+            >
+              {section.title || section.description ? (
+                <div className="form-section__head">
+                  {section.title ? <h3>{section.title}</h3> : null}
+                  {section.description ? <p>{section.description}</p> : null}
+                </div>
+              ) : null}
+              <div className={isCompactSection ? "form-section__body field-grid field-grid--compact" : "form-section__body"}>
+                {section.fields.map((field) => renderField(field))}
+              </div>
+            </section>
           );
         })}
 
-        {message ? <p className="form-success">{message}</p> : null}
-        {error ? <p className="form-error">{error}</p> : null}
+        {message ? (
+          <p className="form-success" aria-live="polite">
+            {message}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="form-error" aria-live="polite">
+            {error}
+          </p>
+        ) : null}
 
-        <div className="button-row">
+        <div className="form-actions">
           <button type="submit" className="primary-button" disabled={isPending}>
             {isPending ? "保存中..." : "保存する"}
           </button>

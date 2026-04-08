@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { ApiError, clientApiFetch } from "@/lib/api-client";
 import type { User } from "@/lib/types";
 
+const renderFieldLabel = (label: string, required?: boolean) => (
+  <span className="field-label">
+    <span>{label}</span>
+    {required ? <span className="field-required">必須</span> : null}
+  </span>
+);
+
 export const PasswordChangeForm = () => {
   const router = useRouter();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -47,33 +54,54 @@ export const PasswordChangeForm = () => {
         <p>初回ログイン時は仮パスワードから新しいパスワードへ変更してください。</p>
       </div>
 
-      <label className="field">
-        <span>現在のパスワード</span>
-        <input
-          type="password"
-          value={currentPassword}
-          onChange={(event) => setCurrentPassword(event.target.value)}
-          required
-        />
-      </label>
+      <section className="form-section">
+        <div className="form-section__head">
+          <h3>認証情報</h3>
+          <p>現在のパスワードを確認したうえで、新しいパスワードに更新します。</p>
+        </div>
+        <div className="form-section__body">
+          <label className="field">
+            {renderFieldLabel("現在のパスワード", true)}
+            <input
+              type="password"
+              value={currentPassword}
+              autoComplete="current-password"
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              required
+            />
+          </label>
 
-      <label className="field">
-        <span>新しいパスワード</span>
-        <input
-          type="password"
-          value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)}
-          minLength={8}
-          required
-        />
-      </label>
+          <label className="field">
+            {renderFieldLabel("新しいパスワード", true)}
+            <input
+              type="password"
+              value={newPassword}
+              autoComplete="new-password"
+              onChange={(event) => setNewPassword(event.target.value)}
+              minLength={8}
+              required
+            />
+            <small className="field-help">8文字以上で設定してください。</small>
+          </label>
+        </div>
+      </section>
 
-      {message ? <p className="form-success">{message}</p> : null}
-      {error ? <p className="form-error">{error}</p> : null}
+      {message ? (
+        <p className="form-success" aria-live="polite">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="form-error" aria-live="polite">
+          {error}
+        </p>
+      ) : null}
 
-      <button type="submit" className="primary-button" disabled={isPending}>
-        {isPending ? "更新中..." : "変更する"}
-      </button>
+      <div className="form-actions">
+        <button type="submit" className="primary-button" disabled={isPending}>
+          {isPending ? "更新中..." : "変更する"}
+        </button>
+      </div>
     </form>
   );
 };
