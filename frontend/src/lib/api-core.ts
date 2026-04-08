@@ -8,6 +8,34 @@ export class ApiError extends Error {
 }
 
 export const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value);
+const PROTOCOL_RELATIVE_URL_PATTERN = /^\/\//;
+const DOMAIN_LIKE_BASE_URL_PATTERN = /^\/?[a-z0-9.-]+\.[a-z]{2,}(?::\d+)?(?:\/.*)?$/i;
+
+export const normalizeApiBaseUrl = (baseUrl: string, allowRelative = true) => {
+  const trimmed = baseUrl.trim();
+
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  if (isAbsoluteUrl(trimmed)) {
+    return trimmed.replace(/\/$/, "");
+  }
+
+  if (PROTOCOL_RELATIVE_URL_PATTERN.test(trimmed)) {
+    return `https:${trimmed}`.replace(/\/$/, "");
+  }
+
+  if (DOMAIN_LIKE_BASE_URL_PATTERN.test(trimmed)) {
+    return `https://${trimmed.replace(/^\/+/, "")}`.replace(/\/$/, "");
+  }
+
+  if (!allowRelative) {
+    throw new Error(`Expected an absolute API base URL, received: ${trimmed}`);
+  }
+
+  return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || "/" : `/${trimmed.replace(/\/$/, "")}`;
+};
 
 const normalizeRelativeBaseUrl = (baseUrl: string) => {
   if (!baseUrl) {
@@ -44,13 +72,32 @@ export const parseResponse = async <T>(response: Response) => {
     return null as T;
   }
 
-  const data = (await response.json()) as T | { message?: string };
+  const rawBody = await response.text();
+  const tryParseJson = () => {
+    if (!rawBody) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawBody) as T | { message?: string };
+    } catch {
+      return null;
+    }
+  };
+
+  const data = tryParseJson();
 
   if (!response.ok) {
     const message =
-      typeof data === "object" && data !== null && "message" in data ? data.message ?? "API error" : "API error";
+      typeof data === "object" && data !== null && "message" in data
+        ? data.message ?? "API error"
+        : rawBody || "API error";
 
     throw new ApiError(response.status, message);
+  }
+
+  if (data === null) {
+    throw new ApiError(response.status, "API returned a non-JSON response");
   }
 
   return data as T;
