@@ -1,7 +1,5 @@
-import { createApp } from "./app";
+import app from "./app";
 import { config } from "./config";
-
-const app = createApp();
 
 export default app;
 

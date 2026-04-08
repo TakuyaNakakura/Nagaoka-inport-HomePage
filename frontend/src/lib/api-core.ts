@@ -72,13 +72,32 @@ export const parseResponse = async <T>(response: Response) => {
     return null as T;
   }
 
-  const data = (await response.json()) as T | { message?: string };
+  const rawBody = await response.text();
+  const tryParseJson = () => {
+    if (!rawBody) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawBody) as T | { message?: string };
+    } catch {
+      return null;
+    }
+  };
+
+  const data = tryParseJson();
 
   if (!response.ok) {
     const message =
-      typeof data === "object" && data !== null && "message" in data ? data.message ?? "API error" : "API error";
+      typeof data === "object" && data !== null && "message" in data
+        ? data.message ?? "API error"
+        : rawBody || "API error";
 
     throw new ApiError(response.status, message);
+  }
+
+  if (data === null) {
+    throw new ApiError(response.status, "API returned a non-JSON response");
   }
 
   return data as T;
