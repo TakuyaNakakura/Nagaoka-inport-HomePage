@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { fetchActivityReports } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, summarizeText } from "@/lib/format";
 
 export default async function ActivityReportsPage() {
   const response = await fetchActivityReports({ pageSize: 30 });
@@ -19,16 +19,11 @@ export default async function ActivityReportsPage() {
           id: item.id,
           href: `/activity-reports/${item.id}`,
           title: item.title,
-          summary: item.summary,
-          meta: [
-            item.category ?? "カテゴリ未設定",
-            `更新日: ${formatDateTime(item.updatedAt)}`,
-            ...(item.centers?.map((center) => center.centerName) ?? [])
-          ]
+          summary: summarizeText(item.summary, 88),
+          meta: [item.category ?? "カテゴリ未設定", `更新日: ${formatDate(item.updatedAt)}`]
         }))}
         emptyMessage="公開中の活動報告はありません。"
       />
     </>
   );
 }
-

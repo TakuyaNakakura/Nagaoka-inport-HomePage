@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { fetchCompanies } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, summarizeText } from "@/lib/format";
 
 export default async function CompaniesPage() {
   const response = await fetchCompanies({ pageSize: 50 });
@@ -19,10 +19,10 @@ export default async function CompaniesPage() {
           id: item.id,
           href: `/companies/${item.id}`,
           title: item.companyName,
-          summary: item.businessSummary,
+          summary: summarizeText(item.businessSummary, 88),
           meta: [
             { label: "業種", value: item.industry },
-            { label: "更新日", value: formatDateTime(item.updatedAt) }
+            { label: "更新日", value: formatDate(item.updatedAt) }
           ]
         }))}
         emptyMessage="会員企業情報はありません。"
