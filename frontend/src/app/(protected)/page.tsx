@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { fetchDashboard, getCurrentUser } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime, summarizeText } from "@/lib/format";
 
 type Timestamped = {
   updatedAt: string;
@@ -26,20 +26,6 @@ const getLatestUpdatedAt = (items: Timestamped[]) => {
   return items.reduce((latest, item) => {
     return new Date(item.updatedAt).getTime() > new Date(latest).getTime() ? item.updatedAt : latest;
   }, items[0].updatedAt);
-};
-
-const summarizeText = (value?: string | null, maxLength = 96) => {
-  if (!value) {
-    return undefined;
-  }
-
-  const normalized = value.replace(/\s+/g, " ").trim();
-
-  if (!normalized) {
-    return undefined;
-  }
-
-  return normalized.length > maxLength ? `${normalized.slice(0, maxLength).trim()}…` : normalized;
 };
 
 const HomeSection = ({ id, eyebrow, title, description, latestUpdatedAt, tone, children }: HomeSectionProps) => (
@@ -165,8 +151,8 @@ export default async function HomePage() {
                   id: item.id,
                   href: `/news/${item.id}`,
                   title: item.title,
-                  summary: summarizeText(item.body, 120),
-                  meta: [item.category, `更新日: ${formatDateTime(item.updatedAt)}`]
+                  summary: summarizeText(item.body, 72),
+                  meta: [item.category, `更新日: ${formatDate(item.updatedAt)}`]
                 }))}
                 emptyMessage="お知らせはまだありません。"
               />
@@ -185,8 +171,8 @@ export default async function HomePage() {
                   id: item.id,
                   href: `/activity-reports/${item.id}`,
                   title: item.title,
-                  summary: summarizeText(item.summary, 110),
-                  meta: [item.category ?? "活動報告", `更新日: ${formatDateTime(item.updatedAt)}`]
+                  summary: summarizeText(item.summary, 70),
+                  meta: [item.category ?? "活動報告", `更新日: ${formatDate(item.updatedAt)}`]
                 }))}
                 emptyMessage="活動報告はまだありません。"
               />
@@ -207,8 +193,8 @@ export default async function HomePage() {
                   id: item.id,
                   href: `/companies/${item.id}`,
                   title: item.companyName,
-                  summary: summarizeText(item.businessSummary, 88),
-                  meta: [item.industry, `更新日: ${formatDateTime(item.updatedAt)}`]
+                  summary: summarizeText(item.businessSummary, 68),
+                  meta: [item.industry, `更新日: ${formatDate(item.updatedAt)}`]
                 }))}
                 emptyMessage="更新情報はまだありません。"
               />
@@ -227,11 +213,8 @@ export default async function HomePage() {
                   id: item.id,
                   href: `/tech-seeds/${item.id}`,
                   title: item.seedName,
-                  summary: summarizeText(item.seedSummary, 88),
-                  meta: [
-                    item.company?.companyName ?? item.applicationField ?? "技術シーズ",
-                    `更新日: ${formatDateTime(item.updatedAt)}`
-                  ]
+                  summary: summarizeText(item.seedSummary, 68),
+                  meta: [item.company?.companyName ?? "企業未設定", `更新日: ${formatDate(item.updatedAt)}`]
                 }))}
                 emptyMessage="更新情報はまだありません。"
               />
@@ -253,8 +236,8 @@ export default async function HomePage() {
                 id: item.id,
                 href: `/centers/${item.id}`,
                 title: item.centerName,
-                summary: summarizeText(item.summary, 90),
-                meta: [item.domain, `更新日: ${formatDateTime(item.updatedAt)}`]
+                summary: summarizeText(item.summary, 68),
+                meta: [item.domain, `更新日: ${formatDate(item.updatedAt)}`]
               }))}
               emptyMessage="センター情報はまだありません。"
             />
@@ -269,13 +252,17 @@ export default async function HomePage() {
             tone="tertiary"
           >
             <RecordGrid
-              items={dashboard.supportProjects.map((item) => ({
-                id: item.id,
-                href: `/support-projects/${item.id}`,
-                title: item.projectName,
-                summary: summarizeText(item.summary, 90),
-                meta: [`更新日: ${formatDateTime(item.updatedAt)}`]
-              }))}
+              items={dashboard.supportProjects.map((item) => {
+                const primaryCenter = item.centers?.[0]?.centerName;
+
+                return {
+                  id: item.id,
+                  href: `/support-projects/${item.id}`,
+                  title: item.projectName,
+                  summary: summarizeText(item.summary, 68),
+                  meta: [`更新日: ${formatDate(item.updatedAt)}`, ...(primaryCenter ? [primaryCenter] : [])]
+                };
+              })}
               emptyMessage="支援プロジェクトはまだありません。"
             />
           </HomeSection>

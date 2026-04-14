@@ -782,7 +782,7 @@ select:disabled {
 .record-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 .record-card {
@@ -791,9 +791,9 @@ select:disabled {
     var(--surface-panel-strong);
   border-radius: var(--radius-16);
   border: 1px solid var(--border-soft);
-  padding: 20px;
+  padding: 16px;
   display: grid;
-  min-height: 220px;
+  min-height: 176px;
   box-shadow: var(--shadow-soft);
   transition:
     transform 0.16s ease,
@@ -810,7 +810,7 @@ select:disabled {
 .record-card__body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   height: 100%;
 }
 
@@ -818,15 +818,31 @@ select:disabled {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
+}
+
+.record-card__title {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.record-card .status-badge {
+  flex-shrink: 0;
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.78rem;
 }
 
 .record-card__summary {
-  line-height: 1.72;
+  line-height: 1.6;
+  font-size: 0.94rem;
   color: var(--text-muted);
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
@@ -843,7 +859,6 @@ select:disabled {
 }
 
 .meta-list__item,
-.record-card__meta-chip,
 .detail-meta li {
   display: inline-flex;
   align-items: center;
@@ -857,36 +872,28 @@ select:disabled {
   line-height: 1.2;
 }
 
-.record-card__meta-pair {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  padding: 10px 12px;
-  border-radius: var(--radius-16);
-  border: 1px solid rgba(33, 87, 72, 0.1);
-  background: rgba(228, 238, 232, 0.72);
-}
-
 .record-card__meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-soft);
 }
 
-.record-card__meta-label {
+.record-card__meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(33, 87, 72, 0.1);
+  background: rgba(228, 238, 232, 0.58);
   color: var(--text-muted);
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.record-card__meta-value {
-  color: var(--text-strong);
-  font-size: 0.9rem;
-  line-height: 1.35;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .detail-card {
@@ -1220,7 +1227,7 @@ select:disabled {
   }
 
   .record-card__meta {
-    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .checkbox-grid {

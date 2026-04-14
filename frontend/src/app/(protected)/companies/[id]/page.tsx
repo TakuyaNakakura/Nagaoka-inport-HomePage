@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { RichText } from "@/components/RichText";
 import { ApiError, fetchCompany } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, summarizeText } from "@/lib/format";
 
 export default async function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,8 +37,8 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
               id: seed.id,
               href: `/tech-seeds/${seed.id}`,
               title: seed.seedName,
-              summary: seed.seedSummary,
-              meta: [seed.applicationField ?? "分野未設定", `更新日: ${formatDateTime(seed.updatedAt)}`]
+              summary: summarizeText(seed.seedSummary, 80),
+              meta: [seed.applicationField ?? "分野未設定"]
             }))}
             emptyMessage="登録済み技術シーズはありません。"
           />

@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { fetchNewsList } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, summarizeText } from "@/lib/format";
 
 export default async function NewsPage() {
   const response = await fetchNewsList({ pageSize: 30 });
@@ -19,12 +19,11 @@ export default async function NewsPage() {
           id: item.id,
           href: `/news/${item.id}`,
           title: item.title,
-          summary: item.body.slice(0, 100),
-          meta: [item.category, `更新日: ${formatDateTime(item.updatedAt)}`]
+          summary: summarizeText(item.body, 88),
+          meta: [item.category, `更新日: ${formatDate(item.updatedAt)}`]
         }))}
         emptyMessage="公開中のお知らせはありません。"
       />
     </>
   );
 }
-

@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { fetchTechSeeds } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, summarizeText } from "@/lib/format";
 
 type TechSeedsPageProps = {
   searchParams?: Promise<{
@@ -45,11 +45,10 @@ export default async function TechSeedsPage({ searchParams }: TechSeedsPageProps
           id: item.id,
           href: `/tech-seeds/${item.id}`,
           title: item.seedName,
-          summary: item.seedSummary,
+          summary: summarizeText(item.seedSummary, 88),
           meta: [
             { label: "企業", value: item.company?.companyName ?? "企業未設定" },
-            { label: "分野", value: item.applicationField ?? "分野未設定" },
-            { label: "更新日", value: formatDateTime(item.updatedAt) }
+            { label: "更新日", value: formatDate(item.updatedAt) }
           ]
         }))}
         emptyMessage="条件に一致する技術シーズはありません。"

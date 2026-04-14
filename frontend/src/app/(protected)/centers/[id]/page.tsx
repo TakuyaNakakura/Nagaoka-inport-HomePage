@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { RichText } from "@/components/RichText";
 import { ApiError, fetchCenter } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime, summarizeText } from "@/lib/format";
 
 export default async function CenterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -39,8 +39,8 @@ export default async function CenterDetailPage({ params }: { params: Promise<{ i
               id: report.id,
               href: `/activity-reports/${report.id}`,
               title: report.title,
-              summary: report.summary,
-              meta: [`更新日: ${formatDateTime(report.updatedAt)}`]
+              summary: summarizeText(report.summary, 80),
+              meta: [`更新日: ${formatDate(report.updatedAt)}`]
             }))}
             emptyMessage="関連する活動報告はありません。"
           />
@@ -53,8 +53,8 @@ export default async function CenterDetailPage({ params }: { params: Promise<{ i
               id: project.id,
               href: `/support-projects/${project.id}`,
               title: project.projectName,
-              summary: project.summary,
-              meta: [`更新日: ${formatDateTime(project.updatedAt)}`]
+              summary: summarizeText(project.summary, 80),
+              meta: [`更新日: ${formatDate(project.updatedAt)}`]
             }))}
             emptyMessage="関連する支援プロジェクトはありません。"
           />

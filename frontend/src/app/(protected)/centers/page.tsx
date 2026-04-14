@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { fetchCenters } from "@/lib/api-server";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, summarizeText } from "@/lib/format";
 
 export default async function CentersPage() {
   const response = await fetchCenters();
@@ -19,12 +19,11 @@ export default async function CentersPage() {
           id: item.id,
           href: `/centers/${item.id}`,
           title: item.centerName,
-          summary: item.summary,
-          meta: [item.domain, `更新日: ${formatDateTime(item.updatedAt)}`]
+          summary: summarizeText(item.summary, 88),
+          meta: [item.domain, `更新日: ${formatDate(item.updatedAt)}`]
         }))}
         emptyMessage="センター情報はありません。"
       />
     </>
   );
 }
-
